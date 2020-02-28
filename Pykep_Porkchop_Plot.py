@@ -1,6 +1,5 @@
 def main():
 
-    import pygmo as pg
     import pykep as pk
     
     # Use the JPL low precision ephemerides
@@ -9,18 +8,57 @@ def main():
     from matplotlib import pyplot as plt
     import numpy as np
     from scipy import array
-
-    #Pykep makes use of lambert transfers to study interplanetary trajectories by producing Pork-Chop plots
-
-    #Start by sampling departure epochs and transfer times every 15 days and solve the lambert problem in a large defined grid
     
-    start_epochs = np.arange(4000.0,10000.0,15.0)
-    duration = np.arange(180.0,470.0,15.0)
+    print('\nInteplanetary porkchop plot using PyKEP\n')
+    #Pykep makes use of lambert transfers to study interplanetary trajectories by producing Pork-Chop plots
     
     # Define the start and end planets of the inteplanetary trajectory
-    start_planet = jpl_lp('earth')
-    end_planet = jpl_lp('mars')
 
+    while True:
+        start_planet_input = input('Enter initial planet: ').lower()   
+        end_planet_input = input('Enter destination planet: ').lower() 
+    
+        if(start_planet_input == end_planet_input):
+            print('Incorrect input. Initial and destination planets cannot be the same.\n')
+        elif(start_planet_input or end_planet_input) not in ('mercury','venus','earth','mars','jupiter','saturn','uranus','neptune','pluto'):
+            print('Unknown planet name.\n')
+        else:
+            break
+        
+    start_planet = jpl_lp(start_planet_input)
+    end_planet = jpl_lp(end_planet_input)
+    
+    # Set departure epochs and transfer time
+
+    #print(pk.epoch(5102))
+    
+    while True:
+        try:
+            eph1 = float(input('\nEnter first departure epoch in MJD2000: '))
+            eph2 = float(input('Enter latest departure epoch in MJD2000: '))
+        except ValueError:
+            print('Invalid input.\n')
+            continue
+        else:
+            print(f'\nDepature window is from {eph1} to {eph2} (MJD2000)\n')
+            break
+    
+    while True:
+        try:
+            flt1 = float(input('Enter minimum flight time in days: '))
+            flt2 = float(input('Enter maximum flight time in days: '))
+        except ValueError:
+            print('Invalid input.\n')
+            continue
+        else:
+            print(f'\nTotal mission duration is from {flt1} to {flt2} (days)')
+            break
+    
+    # Sample departure epochs and transfer times every 15 days and solve the lambert problem in a large defined grid
+    
+    start_epochs = np.arange(eph1,eph2,15.0)
+    duration = np.arange(flt1,flt2,15.0)
+    
     data = list()
     for start in start_epochs:
         row = list()
@@ -30,7 +68,7 @@ def main():
             l = pk.lambert_problem(r1,r2,T*60*60*24, start_planet.mu_central_body)
             DV1 = np.linalg.norm(array(v1)-array(l.get_v1()[0]))
             DV2 = np.linalg.norm(array(v2)-array(l.get_v2()[0]))
-            DV1 = max([0,DV1-4000])
+            DV1 = max([0,DV1-eph1])
             DV = DV1+DV2
             row.append(DV)
         data.append(row)
@@ -40,7 +78,7 @@ def main():
     i_idx = np.argmin(minrows)
     j_idx = np.argmin(data[i_idx])
     best = data[i_idx][j_idx]
-    print('Best DV: ',best)
+    print('\nBest DV: ',best)
     print('Launch epoch (MJD2000): ',start_epochs[i_idx])
     print('Duration (days): ',duration[j_idx])
     duration_pl, start_epochs_pl = np.meshgrid(duration, start_epochs)
@@ -52,8 +90,10 @@ def main():
     plt.ylabel('Mission Duration (days)')
     plt.show()
 
-
+    '''
     #ZOOM IN TO BEST EPOCH - sample with finer resolution
+    # TODO
+    
     start_epochs = np.arange(8950.0,9100.0,1.0)
     duration = np.arange(200.0,450.0,1.0)
     data=list()
@@ -74,7 +114,7 @@ def main():
     i_idx = np.argmin(minrows)
     j_idx = np.argmin(data[i_idx])
     best = data[i_idx][j_idx]
-    print('Best DV: ',best)
+    print('\nBest DV: ',best)
     print('Launch epoch (MJD2000): ',start_epochs[i_idx])
     print('Duration (days): ',duration[j_idx])
     duration_pl2, start_epochs_pl2 = np.meshgrid(duration, start_epochs)
@@ -85,7 +125,8 @@ def main():
     plt.xlabel('Launch Date (MJD2000)')
     plt.ylabel('Mission Duration (days)')
     plt.show()
-
+    '''
 
 if __name__ == "__main__":
 	main()
+
