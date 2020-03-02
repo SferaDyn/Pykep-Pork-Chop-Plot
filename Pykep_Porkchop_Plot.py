@@ -56,8 +56,6 @@ def main():
     # Sample departure epochs and transfer times every 15 days and solve the lambert problem in a large defined grid
     
     plotContours(start_planet,end_planet,input_eph1,input_eph2,input_flt1,input_flt2,15.0)
-
-    #ZOOM IN TO BEST EPOCH - sample with finer resolution
     
     while True:
         zoom = input('\nWould you like to sample with a finer resolution? (Y/N)\n')
